@@ -1,4 +1,6 @@
 This is a lightweight webcam program written in Python utilizing the OpenCV library and wxPython for the GUI. The task was to create a small cross-platform program to capture images.
-Currently the program is in alpha, with only the webcam stream showing and a capture button.
+The program can change directories and record pictures in png format. 
+
 
 This is mostly meant as a programming exercise, but feel free to use it!
+If anyone would like an .exe version, feel free to email me to get it.
