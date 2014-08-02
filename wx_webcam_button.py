@@ -37,7 +37,6 @@ class webcamPanel(wx.Panel):
 		
 		
 		self.SetSize((width,height))
-		self.GetParent().GetParent().SetSize((width,height+123))
 		
 		self.timer = wx.Timer(self)
 		self.timer.Start(1000./fps)
@@ -90,11 +89,17 @@ class mainWindow(wx.Frame):
 		
 		
 		#main ui
-		self.panel = wx.Panel(self, -1)
-		self.webcampanel = webcamPanel(self.panel, camera)
-		webcampanelsize = self.webcampanel.GetSize()
-		self.button = wx.Button(self.panel, label="Take Picture!", pos=(0,webcampanelsize.height), size=(webcampanelsize.width,75))
+		self.webcampanel = webcamPanel(self, camera)
+		self.button = wx.Button(self, label="Take Picture!")
 		
+		main_window_sizer = wx.BoxSizer(wx.VERTICAL)
+		
+		main_window_sizer.Add(self.webcampanel, 7, wx.CENTER | wx.BOTTOM | wx.EXPAND, 1)
+		main_window_sizer.SetItemMinSize(self.webcampanel, (640,480))
+		main_window_sizer.Add(self.button, 1, wx.CENTER | wx.EXPAND)
+		
+		self.SetSizer(main_window_sizer)
+		main_window_sizer.Fit(self)
 		
 		self.Bind(wx.EVT_MENU, self.change_dir, change_dir)
 		self.Bind(wx.EVT_MENU, self.mirror, self.mirrorcheckbox)
@@ -129,11 +134,9 @@ class mainWindow(wx.Frame):
 		if self.sixforty.IsChecked() == True:
 			width = 640
 			height = 480
-			print "640x480"
 		elif self.ninteentwenty.IsChecked() == True:
 			width = 1920
 			height = 1080
-			print "1920x1080"
 	
 	def custom_resolution(self, e):
 		
@@ -204,18 +207,11 @@ class mainWindow(wx.Frame):
 		
 		if height > 500:
 			multiplyer = float(500.0 / height)
-			
-			print multiplyer
-			
 			multiplyer = round(multiplyer, 3)
-			
-			print multiplyer
 			height *= multiplyer
 			height = int(height)
-			print height
 			width *= multiplyer
 			width = int(width)
-			print width
 		
 		saved_image = cv2.resize(saved_image, (width,height))
 		#show the image in a new window!
