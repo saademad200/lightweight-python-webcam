@@ -65,7 +65,7 @@ class mainWindow(wx.Frame):
 		current_directory = os.getcwd()
 		
 		#inheritence
-		wx.Frame.__init__(self, None)
+		wx.Frame.__init__(self, None, style=wx.MINIMIZE_BOX | wx.MAXIMIZE_BOX | wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX | wx.CLIP_CHILDREN)
 		self.Title = "webcam"
 		#menubar
 		menubar = wx.MenuBar()
