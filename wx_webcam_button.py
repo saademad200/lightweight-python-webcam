@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 import os
 
+from wx.lib.masked import NumCtrl
 """
 requires wx, cv2, and numpy to run. the frozen exe is ~36MB
 
@@ -16,6 +17,7 @@ http://stackoverflow.com/questions/24856687/wxpython-button-widget-wont-move
 current_directory = ''
 iteration = 1
 mirror = True
+width, height = (1920,1080)
 
 class webcamPanel(wx.Panel):
 	
@@ -76,6 +78,12 @@ class mainWindow(wx.Frame):
 		optionsmenu = wx.Menu()
 		self.mirrorcheckbox = optionsmenu.AppendCheckItem(-1, 'Mirror Image', "Mirror")
 		optionsmenu.Check(self.mirrorcheckbox.GetId(), True)
+		resolutionsmenu = wx.Menu()
+		self.sixforty = resolutionsmenu.AppendRadioItem(-1, '640x480', "640x480")
+		self.ninteentwenty = resolutionsmenu.AppendRadioItem(-1, '1920x1080', "1920x1080")
+		self.custom = resolutionsmenu.AppendRadioItem(-1, 'Custom', "Custom")
+		resolutionsmenu.Check(self.ninteentwenty.GetId(), True)
+		optionsmenu.AppendMenu(wx.ID_ANY, '&Resolutions', resolutionsmenu)
 		menubar.Append(optionsmenu,'&Options')
 		
 		self.SetMenuBar(menubar)
@@ -87,10 +95,12 @@ class mainWindow(wx.Frame):
 		webcampanelsize = self.webcampanel.GetSize()
 		self.button = wx.Button(self.panel, label="Take Picture!", pos=(0,webcampanelsize.height), size=(webcampanelsize.width,75))
 		
-
 		
 		self.Bind(wx.EVT_MENU, self.change_dir, change_dir)
 		self.Bind(wx.EVT_MENU, self.mirror, self.mirrorcheckbox)
+		self.Bind(wx.EVT_MENU, self.resolution, self.sixforty)
+		self.Bind(wx.EVT_MENU, self.resolution, self.ninteentwenty)
+		self.Bind(wx.EVT_MENU, self.custom_resolution, self.custom)
 		self.Bind(wx.EVT_BUTTON, self.take_picture, self.button)
 			
 	def change_dir(self, e):
@@ -112,16 +122,73 @@ class mainWindow(wx.Frame):
 		global mirror
 		mirror = self.mirrorcheckbox.IsChecked()
 			
+	def resolution(self, e):
+		global width
+		global height
+		
+		if self.sixforty.IsChecked() == True:
+			width = 640
+			height = 480
+			print "640x480"
+		elif self.ninteentwenty.IsChecked() == True:
+			width = 1920
+			height = 1080
+			print "1920x1080"
+	
+	def custom_resolution(self, e):
+		
+		global width
+		global height
+		
+		dlg = wx.Dialog(self, size = (300,150))
+		self.instructions = wx.StaticText(dlg, wx.ID_ANY, 'Here you can input a custom resolution. Make sure your camera supports it.')
+		
+		self.width = NumCtrl(dlg)
+		self.width.SetAllowNegative(False)
+		self.width.SetAllowNone(False)
+		self.width.SetValue(width)
+		self.placex = wx.StaticText(dlg, wx.ID_ANY, 'x')
+		self.height = NumCtrl(dlg)
+		self.height.SetAllowNegative(False)
+		self.height.SetAllowNone(False)
+		self.height.SetValue(height)
+		
+		self.enter = wx.Button(dlg, wx.ID_OK)
+		self.cancel = wx.Button(dlg, wx.ID_CANCEL)
+		
+		wrap_sizer = wx.BoxSizer(wx.VERTICAL)
+		instructions_sizer = wx.BoxSizer(wx.HORIZONTAL)
+		button_sizer = wx.BoxSizer(wx.HORIZONTAL)
+		
+		button_sizer.Add(self.enter, 0, wx.CENTER | wx.RIGHT, 5)
+		button_sizer.Add(self.cancel, 0, wx.CENTER)
+		instructions_sizer.Add(self.width, 1, wx.CENTER | wx.EXPAND)
+		instructions_sizer.Add(self.placex, 0, wx.CENTER)
+		instructions_sizer.Add(self.height, 1, wx.CENTER | wx.EXPAND)
+		wrap_sizer.Add(self.instructions, 1, wx.CENTER | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
+		wrap_sizer.Add(instructions_sizer, 0, wx.CENTER | wx.EXPAND | wx.ALL, 10)
+		wrap_sizer.Add(button_sizer, 0, wx.CENTER | wx.BOTTOM, 10)
+		
+		dlg.SetSizer(wrap_sizer)
+		dlg.Centre()
+		dlg.Show()
+		
+		if dlg.ShowModal() == wx.ID_OK:
+			height = self.height.GetValue()
+			width = self.width.GetValue()
 		
 	def take_picture(self, e):
 		#declare global variables
 		global current_directory
 		global iteration
 		global mirror
+		global height
+		global width
 		
 		#get current frame from camera
-		camera.set(3,1920)
-		camera.set(4,1080)
+		camera.set(3,width)
+		camera.set(4,height)
+		
 		return_value, image = camera.read()
 		#check to see if you should mirror image
 		if mirror:
@@ -134,6 +201,23 @@ class mainWindow(wx.Frame):
 		cv2.imwrite(filename,image)
 		#read the image (this is backwards isn't it?!
 		saved_image = cv2.imread(filename)
+		
+		if height > 500:
+			multiplyer = float(500.0 / height)
+			
+			print multiplyer
+			
+			multiplyer = round(multiplyer, 3)
+			
+			print multiplyer
+			height *= multiplyer
+			height = int(height)
+			print height
+			width *= multiplyer
+			width = int(width)
+			print width
+		
+		saved_image = cv2.resize(saved_image, (width,height))
 		#show the image in a new window!
 		cv2.imshow('Snapshot!',saved_image)
 		camera.set(3, 640)
